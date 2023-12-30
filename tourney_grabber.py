@@ -59,7 +59,10 @@ def flatten_nested_json_df(df):
     return df
 
 #TODO need to make date range generic so this is easier to share
+# This contains the GraphQL query and request logic
 def get_all_tournies_for_fourth_pr_season(auth_token, coords, radius, num_per_page):
+
+  # This is the query
   graphql_query = """
 query BayNorCalTournaments($page: Int, $perPage: Int, $coordinates: String!, $radius: String!) {
   tournaments(
@@ -94,6 +97,10 @@ query BayNorCalTournaments($page: Int, $perPage: Int, $coordinates: String!, $ra
 }
 """
   tournies = []
+
+  # This range here is used because the results from startGG are paginated, i.e. they don't show all the results,
+  #   they're shown in pages. If there were 100 resuls, and we could only see 10 per page, then we would need to go through
+  #   and make ten seperate requests to see all the tournaments we need
   for i in range(1, 10):
     variables = {
         "page": i,
@@ -105,14 +112,19 @@ query BayNorCalTournaments($page: Int, $perPage: Int, $coordinates: String!, $ra
     json_data = json.dumps(data)
     auth_header = auth_token
     header = {'Authorization': auth_header}  
+
+
+    # Extracting & making the the actual response to startgg
     response = requests.post(url=request_url, headers=header, data=json_data)
     json_resp = json.loads(response.text)
-  
     curr_tournies_page = json_resp['data']['tournaments']['nodes']
-    # This numbe should be equal num_per_page until we reach the last page, then it should be 0.
-    # If it's not then there might be some errors/potentially getting rate limited. Add validation
-    # if important.
+
+    # The number printed should be equal num_per_page until we reach the last page, then it should be 0.
+    #   If it's not then there might be some errors/potentially getting rate limited. TODO Add validation if
+    #   this is gonna be used for something actually important
     print("Number of tournies in page is:" + str(len(curr_tournies_page)))
+
+    # Add the current page of tournaments that we've queried into our local set. 
     tournies += curr_tournies_page
   return tournies
 
@@ -151,9 +163,7 @@ ult_tournies = flat_tournies[
 
 
 
-# This next section of the code is p much all just renaming stuff to make things a little bit more understadable, visualy
-
-
+# This next section of the code is p much all just renaming stuff to make things a little bit more understadable, visually
 
 # The event slug actually is the start gg url suffix
 ult_tournies = ult_tournies.rename(columns={"events.slug":"startgg_url"})
