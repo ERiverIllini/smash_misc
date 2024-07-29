@@ -74,8 +74,8 @@ query BayNorCalTournaments($page: Int, $perPage: Int, $coordinates: String!, $ra
         distanceFrom: $coordinates,
         distance: $radius
       },
-      afterDate: 1696032000
-      beforeDate: 1704153540
+      afterDate: 1719792000 
+      beforeDate: 1727740800 
     }
     sortBy:"startAt"
   }) {
@@ -111,21 +111,23 @@ query BayNorCalTournaments($page: Int, $perPage: Int, $coordinates: String!, $ra
     data = {"query" : graphql_query, "variables": variables}
     json_data = json.dumps(data)
     auth_header = auth_token
-    header = {'Authorization': auth_header}  
+    header = {'Authorization': 'Bearer ' + auth_header}  
 
 
     # Extracting & making the the actual response to startgg
     response = requests.post(url=request_url, headers=header, data=json_data)
     json_resp = json.loads(response.text)
-    curr_tournies_page = json_resp['data']['tournaments']['nodes']
+    print(json_resp)
+    if ("errors" not in json_resp):
+       
+      curr_tournies_page = json_resp['data']['tournaments']['nodes']
+      # The number printed should be equal num_per_page until we reach the last page, then it should be 0.
+      #   If it's not then there might be some errors/potentially getting rate limited. TODO Add validation if
+      #   this is gonna be used for something actually important
+      print("Number of tournies in page is:" + str(len(curr_tournies_page)))
 
-    # The number printed should be equal num_per_page until we reach the last page, then it should be 0.
-    #   If it's not then there might be some errors/potentially getting rate limited. TODO Add validation if
-    #   this is gonna be used for something actually important
-    print("Number of tournies in page is:" + str(len(curr_tournies_page)))
-
-    # Add the current page of tournaments that we've queried into our local set. 
-    tournies += curr_tournies_page
+      # Add the current page of tournaments that we've queried into our local set. 
+      tournies += curr_tournies_page
   return tournies
 
 
